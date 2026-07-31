@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: #f4f6f9;
+  color: #1a2b3c;
+}
+
+/* 현장 직원 화면용 - 큰 터치 타겟, 스크롤 시 부드러운 느낌 */
+.worker-shell {
+  -webkit-text-size-adjust: 100%;
+}
+
+.worker-shell input,
+.worker-shell select,
+.worker-shell textarea,
+.worker-shell button {
+  font-size: 1.125rem;
+}
+
+/* 숫자 입력 시 스피너 제거 (모바일에서 더 깔끔하게) */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #b0b9c1;
+  border-radius: 999px;
+}
