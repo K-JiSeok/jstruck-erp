@@ -122,16 +122,20 @@ export default function SoldVehiclesSection({ vehicles }: { vehicles: Vehicle[] 
                                     <Link
                                       key={v.id}
                                       href={`/admin/vehicles/${v.id}`}
-                                      className="flex items-center justify-between px-8 py-2.5 hover:bg-brand-50/40"
+                                      className="flex items-center gap-4 px-8 py-3 hover:bg-brand-50/40"
                                     >
-                                      <div>
-                                        <p className="text-sm font-semibold text-ink-900">{v.plate_number}</p>
-                                        <p className="text-xs text-ink-400">
-                                          {v.vehicle_type ?? '차종 미입력'}
-                                          {v.sold_at && <> · 판매일 {v.sold_at.slice(0, 10)}</>}
-                                        </p>
-                                      </div>
-                                      <div className="flex items-center gap-2">
+                                      <span className="w-24 shrink-0 font-semibold text-ink-900">
+                                        {v.plate_number}
+                                      </span>
+                                      <span className="min-w-0 flex-1 truncate text-sm text-ink-600">
+                                        {v.vehicle_type ?? '차종 미입력'}
+                                        {v.sold_at && (
+                                          <span className="ml-2 text-ink-400">
+                                            · 판매일 {v.sold_at.slice(0, 10)}
+                                          </span>
+                                        )}
+                                      </span>
+                                      <div className="flex shrink-0 items-center gap-2">
                                         <span className="text-sm font-semibold text-ink-700">
                                           {formatWon(v.sale_price)}
                                         </span>
