@@ -546,12 +546,14 @@ export async function syncSettlementItems(
 
   if (missing.length > 0 || missingFixed.length > 0) {
     let order = existing.length > 0 ? Math.max(...existing.map((i) => i.sort_order)) + 1 : 0;
+    // 상사비/세금/실내크리닝은 나중에 추가되더라도 맨 앞에 오도록 음수 순서를 준다
+    let fixedOrder = -missingFixed.length;
     const rows = [
       ...missingFixed.map((label) => ({
         vehicle_id: vehicleId,
         label,
         amount: computeFixedDefault(label, vehicle),
-        sort_order: order++,
+        sort_order: fixedOrder++,
       })),
       ...missing.map(([label, amount]) => ({
         vehicle_id: vehicleId,

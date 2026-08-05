@@ -10,10 +10,6 @@ function isImageUrl(url: string) {
   return /\.(jpe?g|png|gif|webp|bmp)(\?.*)?$/i.test(url);
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 // 브라우저(특히 모바일)에서 다른 도메인의 파일도 실제로 "다운로드"(사진첩 저장)되도록
 // fetch로 받아 blob URL을 만들어 저장을 트리거한다.
 async function forceDownload(url: string, filename: string) {
@@ -147,36 +143,31 @@ export default function FileUploadSection({
     }
   }
 
-  // 모바일에서는 공유 시트를 한 번만 띄워서 "사진에 저장"으로 한번에 앨범에 담기게 하고,
-  // 지원 안 하는 브라우저(대부분 PC)에서는 파일을 하나씩 순차 다운로드한다.
+  // zip으로 한번에 묶어서 다운로드한다 (알림이 여러 번 뜨는 문제 방지, 모든 브라우저에서 동작)
   async function handleDownloadAll() {
     if (files.length === 0) return;
     setDownloadingAll(true);
     try {
-      const fileObjects = await Promise.all(
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      await Promise.all(
         files.map(async (f, i) => {
           const res = await fetch(f.file_url);
           const blob = await res.blob();
-          return new File([blob], filenameFor(f, i), { type: blob.type || 'image/jpeg' });
+          zip.file(filenameFor(f, i), blob);
         })
       );
-
-      const nav = navigator as any;
-      if (nav.canShare && nav.canShare({ files: fileObjects })) {
-        await nav.share({ files: fileObjects, title: VEHICLE_FILE_LABEL[fileType] });
-        return;
-      }
-
-      // Web Share를 지원하지 않으면 하나씩 다운로드 (알림이 여러 번 뜰 수 있어요)
-      for (let i = 0; i < files.length; i++) {
-        await forceDownload(files[i].file_url, filenameFor(files[i], i));
-        await sleep(400);
-      }
-    } catch (err: any) {
-      // 사용자가 공유창을 취소한 경우(AbortError)는 에러로 취급하지 않는다
-      if (err?.name !== 'AbortError') {
-        alert('다운로드 중 문제가 발생했습니다. 다시 시도해주세요.');
-      }
+      const content = await zip.generateAsync({ type: 'blob' });
+      const blobUrl = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${VEHICLE_FILE_LABEL[fileType]}_전체.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    } catch {
+      alert('전체 다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setDownloadingAll(false);
     }
@@ -281,7 +272,7 @@ export default function FileUploadSection({
                     e.stopPropagation();
                     forceDownload(f.file_url, filenameFor(f));
                   }}
-                  className="absolute bottom-1 left-1 rounded-full bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100"
+                  className="absolute bottom-1 left-1 rounded-full bg-black/60 p-1 text-white"
                 >
                   <Download size={12} />
                 </button>
@@ -291,7 +282,7 @@ export default function FileUploadSection({
                     e.stopPropagation();
                     handleDelete(f.id);
                   }}
-                  className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100"
+                  className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
                 >
                   <Trash2 size={12} />
                 </button>
