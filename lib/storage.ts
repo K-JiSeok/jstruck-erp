@@ -1,11 +1,15 @@
 import { supabase } from './supabaseClient';
+import { computeAgencyFee, computeTaxAmount, FIXED_INTERIOR_CLEANING_AMOUNT } from './format';
 import {
   CardCompany,
   Employee,
   Expense,
   ExpenseCategory,
   ExpenseFilters,
+  EXPENSE_CATEGORIES,
   PaymentMethod,
+  SalesCommission,
+  SettlementItem,
   Vehicle,
   VehicleAd,
   VehicleFile,
@@ -157,7 +161,8 @@ export async function markVehicleSold(
   id: string,
   soldByEmployeeId: string,
   salePrice: number | null,
-  taxInvoiceAmount: number | null
+  taxInvoiceAmount: number | null,
+  saleDate?: string // 'YYYY-MM-DD' - 실제 판매 날짜 (없으면 오늘)
 ) {
   const vehicle = await getVehicle(id);
   if (!vehicle) throw new Error('차량을 찾을 수 없습니다.');
@@ -169,6 +174,7 @@ export async function markVehicleSold(
     sold_by: soldByEmployeeId,
     sale_price: salePrice,
     tax_invoice_amount: taxInvoiceAmount,
+    sold_at: saleDate ? new Date(`${saleDate}T12:00:00`).toISOString() : new Date().toISOString(),
   });
 }
 
@@ -180,10 +186,21 @@ export async function cancelSale(id: string) {
     sale_price: null,
     tax_invoice_amount: null,
     contract_deposit_amount: null,
+    sold_at: null,
     performance_check_confirmed: false,
     performance_check_confirmed_by: null,
     performance_check_confirmed_at: null,
   });
+}
+
+export async function listSoldVehicles(): Promise<Vehicle[]> {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('*')
+    .eq('status', 'sold')
+    .order('sold_at', { ascending: false });
+  if (error) throw error;
+  return data as Vehicle[];
 }
 
 export async function listVehiclesSoldBy(employeeId: string): Promise<Vehicle[]> {
@@ -419,6 +436,258 @@ export async function listNotifications(limit = 20) {
     .limit(limit);
   if (error) throw error;
   return data;
+}
+
+// ================= Settlement Items (정산 시트 - 통합 지출 항목) =================
+
+// 정산페이지 전용 항목 (등록 화면 12개 항목과는 겹치지 않는, 사무실에서 직접 입력하는 항목)
+// 상사비/세금/실내크리닝은 자동계산되는 고정 항목이라 이 목록에서 제외한다 (settlement 페이지에서 별도 처리).
+export const DEFAULT_SETTLEMENT_LABELS = [
+  '낙찰수수료',
+  '매입대행비',
+  '성능비',
+  '시트작업비',
+  '부가세차액',
+  '타타대우',
+  '특장',
+  '조선/비앤에스',
+  '블박/후방/실내',
+  '구조변경',
+  '운송료',
+  '장착/탈착비',
+  '소개비',
+  '설정해지료',
+  '보험료',
+  '광천상사',
+];
+
+// 자동으로 초기값이 계산되는 항목 (이후에는 다른 항목처럼 자유롭게 수정 가능)
+const FIXED_DEFAULT_LABELS = ['상사비', '세금', '실내크리닝'];
+
+function computeFixedDefault(label: string, vehicle: Vehicle): number {
+  if (label === '상사비') return computeAgencyFee(vehicle.sale_price);
+  if (label === '세금') return computeTaxAmount(vehicle.purchase_amount, vehicle.tax_invoice_amount);
+  if (label === '실내크리닝') return FIXED_INTERIOR_CLEANING_AMOUNT;
+  return 0;
+}
+
+// 등록 화면 12개 항목(기타 제외) + 정산 전용 항목 = 표에 항상 보여줄 기본 틀
+// 자동계산 항목(상사비/세금/실내크리닝)을 제일 앞에 배치한다.
+const SETTLEMENT_TEMPLATE_LABELS = [
+  ...FIXED_DEFAULT_LABELS,
+  ...EXPENSE_CATEGORIES.filter((c) => c !== '기타'),
+  ...DEFAULT_SETTLEMENT_LABELS,
+];
+
+export async function listSettlementItems(vehicleId: string): Promise<SettlementItem[]> {
+  const { data, error } = await supabase
+    .from('vehicle_settlement_items')
+    .select('*')
+    .eq('vehicle_id', vehicleId)
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  return data as SettlementItem[];
+}
+
+// 등록된 비용(특히 '기타'로 등록된 항목은 업체명/내용을 항목명으로 사용)에서
+// 라벨별 합계를 계산한다. 기존 표에 없는 라벨만 새로 추가하기 위한 비교 대상.
+function computeExpenseDrivenLabels(expenses: Expense[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const e of expenses) {
+    const label =
+      e.category === '기타' ? (e.category_note?.trim() || e.vendor?.trim() || '기타') : e.category;
+    map.set(label, (map.get(label) ?? 0) + e.amount);
+  }
+  return map;
+}
+
+// 정산표를 실제 데이터 기준으로 동기화한다.
+// - 처음 여는 차량이면: 기본 엑셀 항목(공란, 단 상사비/세금/실내크리닝은 자동계산 초기값) +
+//   등록된 비용에서 뽑아낸 항목(금액 채움)을 한번에 생성. 이후에는 다른 항목과 똑같이 자유 수정 가능.
+// - 이미 항목이 있으면: 새로 등록된 비용 중 아직 표에 없는 라벨만 추가 (기존 값은 건드리지 않음)
+export async function syncSettlementItems(
+  vehicleId: string,
+  expenses: Expense[],
+  vehicle: Vehicle
+): Promise<SettlementItem[]> {
+  const existing = await listSettlementItems(vehicleId);
+  const expenseLabels = computeExpenseDrivenLabels(expenses);
+
+  if (existing.length === 0) {
+    const rows: { vehicle_id: string; label: string; amount: number; sort_order: number }[] = [];
+    let order = 0;
+    for (const label of SETTLEMENT_TEMPLATE_LABELS) {
+      const amount = FIXED_DEFAULT_LABELS.includes(label)
+        ? computeFixedDefault(label, vehicle)
+        : expenseLabels.get(label) ?? 0;
+      rows.push({
+        vehicle_id: vehicleId,
+        label,
+        amount,
+        sort_order: order++,
+      });
+    }
+    // 기본 목록에 없는(등록된 비용에만 있는) 라벨도 추가
+    for (const [label, amount] of expenseLabels.entries()) {
+      if (!SETTLEMENT_TEMPLATE_LABELS.includes(label)) {
+        rows.push({ vehicle_id: vehicleId, label, amount, sort_order: order++ });
+      }
+    }
+    const { error } = await supabase.from('vehicle_settlement_items').insert(rows);
+    if (error) throw error;
+    return listSettlementItems(vehicleId);
+  }
+
+  const existingLabels = new Set(existing.map((i) => i.label));
+  const missing = Array.from(expenseLabels.entries()).filter(([label]) => !existingLabels.has(label));
+
+  // 상사비/세금/실내크리닝이 아직 없다면(예: 삭제 후 재계산이 필요한 경우) 자동계산 초기값으로 추가
+  const missingFixed = FIXED_DEFAULT_LABELS.filter((label) => !existingLabels.has(label));
+
+  if (missing.length > 0 || missingFixed.length > 0) {
+    let order = existing.length > 0 ? Math.max(...existing.map((i) => i.sort_order)) + 1 : 0;
+    const rows = [
+      ...missingFixed.map((label) => ({
+        vehicle_id: vehicleId,
+        label,
+        amount: computeFixedDefault(label, vehicle),
+        sort_order: order++,
+      })),
+      ...missing.map(([label, amount]) => ({
+        vehicle_id: vehicleId,
+        label,
+        amount,
+        sort_order: order++,
+      })),
+    ];
+    const { error } = await supabase.from('vehicle_settlement_items').insert(rows);
+    if (error) throw error;
+    return listSettlementItems(vehicleId);
+  }
+
+  return existing;
+}
+
+export async function addSettlementItem(
+  vehicleId: string,
+  label: string,
+  sortOrder: number
+): Promise<SettlementItem> {
+  const { data, error } = await supabase
+    .from('vehicle_settlement_items')
+    .insert({ vehicle_id: vehicleId, label, amount: 0, sort_order: sortOrder })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as SettlementItem;
+}
+
+export async function updateSettlementItem(
+  id: string,
+  patch: Partial<Pick<SettlementItem, 'label' | 'amount'>>
+): Promise<SettlementItem> {
+  const { data, error } = await supabase
+    .from('vehicle_settlement_items')
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as SettlementItem;
+}
+
+export async function deleteSettlementItem(id: string) {
+  const { error } = await supabase.from('vehicle_settlement_items').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ================= 월정산 (판매 차량 리스트 + 직원별 판매수당) =================
+
+// 여러 차량의 지출합계를 한번에 조회 (월정산 리스트용, 개별 정산페이지를 열지 않아도 됨)
+export async function listSettlementTotals(vehicleIds: string[]): Promise<Map<string, number>> {
+  if (vehicleIds.length === 0) return new Map();
+  const { data, error } = await supabase
+    .from('vehicle_settlement_items')
+    .select('vehicle_id, amount')
+    .in('vehicle_id', vehicleIds);
+  if (error) throw error;
+  const map = new Map<string, number>();
+  for (const row of data as { vehicle_id: string; amount: number }[]) {
+    map.set(row.vehicle_id, (map.get(row.vehicle_id) ?? 0) + row.amount);
+  }
+  return map;
+}
+
+export async function listSalesCommissions(vehicleIds: string[]): Promise<SalesCommission[]> {
+  if (vehicleIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('vehicle_sales_commissions')
+    .select('*')
+    .in('vehicle_id', vehicleIds);
+  if (error) throw error;
+  return data as SalesCommission[];
+}
+
+export async function upsertSalesCommission(
+  vehicleId: string,
+  employeeId: string,
+  amount: number
+): Promise<SalesCommission> {
+  const { data, error } = await supabase
+    .from('vehicle_sales_commissions')
+    .upsert(
+      { vehicle_id: vehicleId, employee_id: employeeId, amount },
+      { onConflict: 'vehicle_id,employee_id' }
+    )
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as SalesCommission;
+}
+
+export async function getMonthlyMemo(month: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('monthly_settlement_memos')
+    .select('memo')
+    .eq('month', month)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.memo ?? '';
+}
+
+export async function getMonthlySettlementConfig(
+  month: string
+): Promise<{ memo: string; extraSeller1Name: string; extraSeller2Name: string }> {
+  const { data, error } = await supabase
+    .from('monthly_settlement_memos')
+    .select('memo, extra_seller_1_name, extra_seller_2_name')
+    .eq('month', month)
+    .maybeSingle();
+  if (error) throw error;
+  return {
+    memo: data?.memo ?? '',
+    extraSeller1Name: data?.extra_seller_1_name ?? '',
+    extraSeller2Name: data?.extra_seller_2_name ?? '',
+  };
+}
+
+export async function saveMonthlyMemo(month: string, memo: string): Promise<void> {
+  const { error } = await supabase
+    .from('monthly_settlement_memos')
+    .upsert({ month, memo, updated_at: new Date().toISOString() }, { onConflict: 'month' });
+  if (error) throw error;
+}
+
+export async function saveMonthlyExtraSellerName(
+  month: string,
+  slot: 1 | 2,
+  name: string
+): Promise<void> {
+  const field = slot === 1 ? 'extra_seller_1_name' : 'extra_seller_2_name';
+  const { error } = await supabase
+    .from('monthly_settlement_memos')
+    .upsert({ month, [field]: name, updated_at: new Date().toISOString() }, { onConflict: 'month' });
+  if (error) throw error;
 }
 
 // ================= Vendors (자주 쓰는 업체 등록) =================

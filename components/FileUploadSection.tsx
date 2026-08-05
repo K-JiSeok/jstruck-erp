@@ -147,15 +147,35 @@ export default function FileUploadSection({
     }
   }
 
-  // 사진첩에 각각 저장되도록 zip이 아니라 파일을 하나씩 순차 다운로드한다.
+  // 모바일에서는 공유 시트를 한 번만 띄워서 "사진에 저장"으로 한번에 앨범에 담기게 하고,
+  // 지원 안 하는 브라우저(대부분 PC)에서는 파일을 하나씩 순차 다운로드한다.
   async function handleDownloadAll() {
     if (files.length === 0) return;
     setDownloadingAll(true);
     try {
+      const fileObjects = await Promise.all(
+        files.map(async (f, i) => {
+          const res = await fetch(f.file_url);
+          const blob = await res.blob();
+          return new File([blob], filenameFor(f, i), { type: blob.type || 'image/jpeg' });
+        })
+      );
+
+      const nav = navigator as any;
+      if (nav.canShare && nav.canShare({ files: fileObjects })) {
+        await nav.share({ files: fileObjects, title: VEHICLE_FILE_LABEL[fileType] });
+        return;
+      }
+
+      // Web Share를 지원하지 않으면 하나씩 다운로드 (알림이 여러 번 뜰 수 있어요)
       for (let i = 0; i < files.length; i++) {
         await forceDownload(files[i].file_url, filenameFor(files[i], i));
-        // 브라우저가 다운로드를 팝업 차단하지 않도록 약간의 간격을 둔다
         await sleep(400);
+      }
+    } catch (err: any) {
+      // 사용자가 공유창을 취소한 경우(AbortError)는 에러로 취급하지 않는다
+      if (err?.name !== 'AbortError') {
+        alert('다운로드 중 문제가 발생했습니다. 다시 시도해주세요.');
       }
     } finally {
       setDownloadingAll(false);

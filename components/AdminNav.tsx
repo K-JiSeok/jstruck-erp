@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Truck, Smartphone, Home, Users } from 'lucide-react';
+import { LayoutDashboard, Truck, Smartphone, Home, Users, Calculator } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/admin', label: '정산 대시보드', icon: LayoutDashboard },
   { href: '/admin/vehicles', label: '차량 관리', icon: Truck },
   { href: '/admin/employees', label: '직원 관리', icon: Users },
+  { href: '/admin/settlement', label: '월정산', icon: Calculator },
 ];
 
 export default function AdminNav() {

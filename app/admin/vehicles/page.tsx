@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Trash2, ChevronRight } from 'lucide-react';
 import AdminNav from '@/components/AdminNav';
 import VehicleForm from '@/components/VehicleForm';
+import SoldVehiclesSection from '@/components/SoldVehiclesSection';
 import { Expense, Vehicle, VEHICLE_STATUS_LABEL } from '@/lib/types';
 import { deleteVehicle, listExpenses, listVehicles } from '@/lib/storage';
 import { useRequireSession } from '@/lib/useSession';
@@ -37,10 +38,20 @@ export default function VehiclesPage() {
     if (session) load();
   }, [session, load]);
 
+  // 판매완료된 차량은 별도 섹션(아래)에서 보여주므로 재고/계약완료 목록에서는 제외
+  const activeVehicles = useMemo(() => vehicles.filter((v) => v.status !== 'sold'), [vehicles]);
+  const soldVehicles = useMemo(
+    () =>
+      [...vehicles.filter((v) => v.status === 'sold')].sort((a, b) =>
+        (b.sold_at ?? b.created_at).localeCompare(a.sold_at ?? a.created_at)
+      ),
+    [vehicles]
+  );
+
   // 이전일(없으면 입고일) 기준 최신순 정렬
   const sortedVehicles = useMemo(
-    () => [...vehicles].sort((a, b) => vehicleSortDate(b).localeCompare(vehicleSortDate(a))),
-    [vehicles]
+    () => [...activeVehicles].sort((a, b) => vehicleSortDate(b).localeCompare(vehicleSortDate(a))),
+    [activeVehicles]
   );
 
   const expenseCountByVehicle = useMemo(() => {
@@ -87,14 +98,14 @@ export default function VehiclesPage() {
           </div>
         )}
 
-        {!loading && vehicles.length === 0 && (
+        {!loading && activeVehicles.length === 0 && (
           <div className="rounded-2xl border border-ink-200 bg-white py-12 text-center text-ink-400">
             등록된 차량이 없습니다. 위 폼에서 차량을 먼저 등록해주세요.
           </div>
         )}
 
         {/* 모바일: 카드형 목록 */}
-        {!loading && vehicles.length > 0 && (
+        {!loading && activeVehicles.length > 0 && (
           <div className="space-y-2 sm:hidden">
             {sortedVehicles.map((v) => {
               const info = expenseCountByVehicle.get(v.id);
@@ -140,7 +151,7 @@ export default function VehiclesPage() {
         )}
 
         {/* PC/태블릿: 표 형태 */}
-        {!loading && vehicles.length > 0 && (
+        {!loading && activeVehicles.length > 0 && (
           <div className="hidden overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card sm:block">
             <table className="w-full text-left text-sm">
               <thead>
@@ -200,6 +211,8 @@ export default function VehiclesPage() {
             </table>
           </div>
         )}
+
+        <SoldVehiclesSection vehicles={soldVehicles} />
       </main>
     </div>
   );

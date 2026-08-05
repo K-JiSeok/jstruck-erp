@@ -104,7 +104,6 @@ export default function ExpenseForm({ session }: { session: Session }) {
     if (paymentMethod === '카드' && !cardCompany) return '카드사를 선택해주세요.';
     const numeric = Number(amount.replace(/[^0-9]/g, ''));
     if (!numeric || numeric <= 0) return '결제 금액을 입력해주세요.';
-    if (!vendor.trim()) return '업체명을 입력해주세요.';
     return '';
   }
 
@@ -267,7 +266,7 @@ export default function ExpenseForm({ session }: { session: Session }) {
             value={amount}
             onChange={(e) => setAmount(formatNumber(e.target.value))}
             placeholder="0"
-            className="w-full rounded-xl border-2 border-ink-200 px-4 py-4 pr-12 text-right text-2xl font-bold outline-none focus:border-brand-500"
+            className="h-[60px] w-full rounded-xl border-2 border-ink-200 px-4 pr-12 text-right text-2xl font-bold outline-none focus:border-brand-500"
           />
           <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-ink-400">
             원
@@ -277,7 +276,7 @@ export default function ExpenseForm({ session }: { session: Session }) {
 
       {/* 업체명 (자주 쓰는 업체 선택/등록 + 음성입력 가능) */}
       <div>
-        <label className="mb-2 block text-base font-bold text-ink-700">⑤ 업체명</label>
+        <label className="mb-2 block text-base font-bold text-ink-700">⑤ 업체명 (선택)</label>
         <div className="flex items-stretch gap-2">
           <VendorPicker
             vendors={vendors}

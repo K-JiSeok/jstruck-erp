@@ -48,10 +48,6 @@ export default function EditExpenseModal({
       setError('결제 금액을 입력해주세요.');
       return;
     }
-    if (!vendor.trim()) {
-      setError('업체명을 입력해주세요.');
-      return;
-    }
     if (category === '기타' && !categoryNote.trim()) {
       setError("'기타' 항목의 내용을 입력해주세요.");
       return;

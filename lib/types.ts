@@ -1,29 +1,29 @@
 export type ExpenseCategory =
-  | '차량수리'
+  | '차량정비'
   | '주유'
   | '부품'
   | '실내정비'
-  | '탁송'
-  | '이전비'
-  | '검사'
-  | '타이어'
-  | '배터리교체'
+  | '탁송료'
+  | '검사료'
+  | '배터리'
   | '도색'
+  | '타이어'
   | '세차'
+  | '이전비'
   | '기타';
 
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  '차량수리',
+  '차량정비',
   '주유',
   '부품',
   '실내정비',
-  '탁송',
-  '이전비',
-  '검사',
-  '타이어',
-  '배터리교체',
+  '탁송료',
+  '검사료',
+  '배터리',
   '도색',
+  '타이어',
   '세차',
+  '이전비',
   '기타',
 ];
 
@@ -33,18 +33,18 @@ export const PAYMENT_METHODS: PaymentMethod[] = ['카드', '현금', '이체', '
 export type CardCompany = '하나' | '농협' | '기업';
 export const CARD_COMPANIES: CardCompany[] = ['하나', '농협', '기업'];
 
-export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
-  '차량수리': 'bg-brand-100 text-brand-700',
+export const CATEGORY_COLORS: Record<string, string> = {
+  '차량정비': 'bg-brand-100 text-brand-700',
   '주유': 'bg-amber-100 text-amber-700',
   '부품': 'bg-indigo-100 text-indigo-700',
   '실내정비': 'bg-violet-100 text-violet-700',
-  '탁송': 'bg-fuchsia-100 text-fuchsia-700',
-  '이전비': 'bg-sky-100 text-sky-700',
-  '검사': 'bg-rose-100 text-rose-700',
-  '타이어': 'bg-slate-200 text-slate-700',
-  '배터리교체': 'bg-lime-100 text-lime-700',
+  '탁송료': 'bg-fuchsia-100 text-fuchsia-700',
+  '검사료': 'bg-rose-100 text-rose-700',
+  '배터리': 'bg-lime-100 text-lime-700',
   '도색': 'bg-cyan-100 text-cyan-700',
+  '타이어': 'bg-slate-200 text-slate-700',
   '세차': 'bg-teal-100 text-teal-700',
+  '이전비': 'bg-sky-100 text-sky-700',
   '기타': 'bg-ink-100 text-ink-600',
 };
 
@@ -74,7 +74,7 @@ export interface Employee {
 export type VehicleStatus = 'in_stock' | 'contracted' | 'sold';
 
 export const VEHICLE_STATUS_LABEL: Record<VehicleStatus, string> = {
-  in_stock: '재고',
+  in_stock: '판매중',
   contracted: '계약완료',
   sold: '판매완료',
 };
@@ -106,7 +106,12 @@ export interface Vehicle {
   tax_invoice_amount: number | null; // 매출계산서
   purchased_by: string | null;
   sold_by: string | null;
+  sold_at: string | null;
   managed_by: string | null;
+  sales_memo_1: string | null;
+  sales_memo_2: string | null;
+  extra_commission_1: number | null;
+  extra_commission_2: number | null;
   performance_check_confirmed: boolean;
   performance_check_confirmed_by: string | null;
   performance_check_confirmed_at: string | null;
@@ -168,6 +173,31 @@ export interface CorporateExpense {
   expense_date: string;
   source: string | null;
   created_at: string;
+}
+
+export interface SettlementItem {
+  id: string;
+  vehicle_id: string;
+  label: string;
+  amount: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface SalesCommission {
+  id: string;
+  vehicle_id: string;
+  employee_id: string;
+  amount: number;
+  created_at: string;
+}
+
+export interface MonthlyMemo {
+  month: string;
+  memo: string | null;
+  extra_seller_1_name: string | null;
+  extra_seller_2_name: string | null;
+  updated_at: string;
 }
 
 export interface AppNotification {

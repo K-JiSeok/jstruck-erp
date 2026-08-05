@@ -12,6 +12,7 @@ import {
   XCircle,
   Pencil,
   ArrowRightLeft,
+  Calculator,
 } from 'lucide-react';
 import AdminNav from '@/components/AdminNav';
 import FileUploadSection from '@/components/FileUploadSection';
@@ -150,10 +151,16 @@ export default function VehicleDetailPage() {
   }
 
   async function handleCancelSale() {
-    if (!vehicle) return;
+    if (!vehicle || !session) return;
+    const canCancel =
+      session.role === 'admin' || session.role === 'ceo' || vehicle.sold_by === session.id;
+    if (!canCancel) {
+      alert('판매완료한 직원, 관리자, 대표이사만 판매취소를 할 수 있습니다.');
+      return;
+    }
     if (
       !confirm(
-        '판매를 취소하고 다시 판매 가능한 재고 상태로 되돌릴까요? (판매금액/매출계산서/성능점검 확인 상태가 초기화됩니다)'
+        '판매를 취소하고 다시 판매 가능한 상태로 되돌릴까요? (판매금액/매출계산서/성능점검 확인 상태가 초기화됩니다)'
       )
     )
       return;
@@ -173,7 +180,7 @@ export default function VehicleDetailPage() {
       if (!vehicle.performance_check_confirmed && values.confirmPerformanceCheck === 'true') {
         await confirmPerformanceCheck(vehicle.id, session.id);
       }
-      await markVehicleSold(vehicle.id, soldByEmployeeId, salePrice, taxInvoiceAmount);
+      await markVehicleSold(vehicle.id, soldByEmployeeId, salePrice, taxInvoiceAmount, values.saleDate);
       setModal(null);
       await load();
     } catch (err: any) {
@@ -210,6 +217,10 @@ export default function VehicleDetailPage() {
 
   if (!session) return null;
 
+  const canCancelSale = vehicle
+    ? session.role === 'admin' || session.role === 'ceo' || vehicle.sold_by === session.id
+    : false;
+
   if (notFound) {
     return (
       <div className="min-h-screen bg-ink-50">
@@ -231,13 +242,27 @@ export default function VehicleDetailPage() {
       <AdminNav />
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
-        <button
-          onClick={() => router.push('/admin/vehicles')}
-          className="flex items-center gap-1 text-sm font-semibold text-ink-400 hover:text-ink-700"
-        >
-          <ArrowLeft size={16} />
-          차량 목록
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => router.push('/admin/vehicles')}
+            className="flex items-center gap-1 text-sm font-semibold text-ink-400 hover:text-ink-700"
+          >
+            <ArrowLeft size={16} />
+            차량 목록
+          </button>
+          {vehicle &&
+            (session.role === 'admin' ||
+              session.role === 'ceo' ||
+              vehicle.purchased_by === session.id) && (
+              <Link
+                href={`/admin/vehicles/${vehicle.id}/settlement`}
+                className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100"
+              >
+                <Calculator size={15} />
+                정산 보기
+              </Link>
+            )}
+        </div>
 
         {loading || !vehicle ? (
           <div className="rounded-2xl border border-ink-200 bg-white py-16 text-center text-ink-400">
@@ -264,6 +289,9 @@ export default function VehicleDetailPage() {
                 <p className="text-sm text-ink-400">
                   {vehicle.vehicle_type ?? '차종 미입력'} · {vehicleDisplayDate(vehicle).label}{' '}
                   {vehicleDisplayDate(vehicle).value ?? '-'}
+                  {vehicle.status === 'sold' && vehicle.sold_at && (
+                    <> · 판매일 {vehicle.sold_at.slice(0, 10)}</>
+                  )}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -276,17 +304,29 @@ export default function VehicleDetailPage() {
                     자가용으로 이전
                   </button>
                 )}
-                {vehicle.status !== 'in_stock' && (
-                  <span
-                    className={`rounded-full px-3 py-1.5 text-sm font-bold ${
-                      vehicle.status === 'sold'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-amber-100 text-amber-700'
-                    }`}
-                  >
+                {vehicle.status === 'contracted' && (
+                  <span className="rounded-full bg-amber-100 px-3 py-1.5 text-sm font-bold text-amber-700">
                     {VEHICLE_STATUS_LABEL[vehicle.status]}
                   </span>
                 )}
+                {vehicle.status === 'sold' &&
+                  (canCancelSale ? (
+                    <button
+                      onClick={handleCancelSale}
+                      className="group rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-bold text-emerald-700 hover:bg-rose-100 hover:text-rose-600"
+                      title="눌러서 판매취소"
+                    >
+                      <span className="group-hover:hidden">판매완료</span>
+                      <span className="hidden items-center gap-1 group-hover:flex">
+                        <XCircle size={14} />
+                        취소
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-bold text-emerald-700">
+                      판매완료
+                    </span>
+                  ))}
                 {vehicle.status === 'in_stock' && (
                   <button
                     onClick={() => setModal('contract')}
@@ -311,15 +351,6 @@ export default function VehicleDetailPage() {
                       판매완료 처리
                     </button>
                   </>
-                )}
-                {vehicle.status === 'sold' && (
-                  <button
-                    onClick={handleCancelSale}
-                    className="flex items-center gap-1 rounded-lg border-2 border-ink-200 px-3 py-2 text-sm font-semibold text-ink-500 hover:bg-ink-50"
-                  >
-                    <XCircle size={15} />
-                    판매취소
-                  </button>
                 )}
               </div>
             </div>
@@ -509,8 +540,15 @@ export default function VehicleDetailPage() {
       {modal === 'sold' && vehicle && (
         <AmountInputModal
           title="판매완료 처리"
-          description="최종 판매금액, 매출계산서 금액, 판매 담당자를 입력해주세요"
+          description="판매일, 최종 판매금액, 매출계산서 금액, 판매 담당자를 입력해주세요"
           fields={[
+            {
+              key: 'saleDate',
+              label: '판매일',
+              type: 'date',
+              required: true,
+              defaultValue: new Date().toISOString().slice(0, 10),
+            },
             { key: 'salePrice', label: '최종 판매금액', required: true },
             { key: 'taxInvoiceAmount', label: '매출계산서' },
             {

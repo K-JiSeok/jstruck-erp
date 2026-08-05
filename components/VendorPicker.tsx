@@ -57,9 +57,9 @@ export default function VendorPicker({
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
-        placeholder="예: 아산정비공업사 (자주 쓰는 업체는 목록에서 선택)"
+        placeholder="예: 신명특장"
         lang="ko"
-        className="w-full rounded-xl border-2 border-ink-200 px-4 py-4 text-lg outline-none focus:border-brand-500"
+        className="h-[60px] w-full rounded-xl border-2 border-ink-200 px-4 text-lg outline-none focus:border-brand-500"
       />
 
       {open && (

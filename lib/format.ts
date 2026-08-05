@@ -4,6 +4,26 @@ export function formatWon(amount: number | null | undefined): string {
   return `${amount.toLocaleString('ko-KR')}원`;
 }
 
+// 상사비: 판매금액 구간별 고정액
+export function computeAgencyFee(salePrice: number | null | undefined): number {
+  const price = salePrice ?? 0;
+  if (price <= 50_000_000) return 500_000;
+  if (price < 100_000_000) return 800_000;
+  return 1_000_000;
+}
+
+// 세금: (매출계산서 - 매입계산서) x 13%, 음수면 0
+export function computeTaxAmount(
+  purchaseInvoiceAmount: number | null | undefined,
+  taxInvoiceAmount: number | null | undefined
+): number {
+  const diff = (taxInvoiceAmount ?? 0) - (purchaseInvoiceAmount ?? 0);
+  return Math.max(0, Math.round(diff * 0.13));
+}
+
+// 실내크리닝: 항상 고정 20만원
+export const FIXED_INTERIOR_CLEANING_AMOUNT = 200_000;
+
 // 억/만원 단위 표기 (예: 150,000,000 -> "1억 5,000만원")
 // amount는 항상 "원" 단위로 저장되어 있다고 가정 (만원 단위 입력값 * 10000)
 export function formatEokMan(amount: number | null | undefined): string {
