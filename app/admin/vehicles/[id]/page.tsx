@@ -305,9 +305,17 @@ export default function VehicleDetailPage() {
                   </button>
                 )}
                 {vehicle.status === 'contracted' && (
-                  <span className="rounded-full bg-amber-100 px-3 py-1.5 text-sm font-bold text-amber-700">
-                    {VEHICLE_STATUS_LABEL[vehicle.status]}
-                  </span>
+                  <button
+                    onClick={handleCancelContract}
+                    className="group rounded-full bg-amber-100 px-3 py-1.5 text-sm font-bold text-amber-700 hover:bg-rose-100 hover:text-rose-600"
+                    title="눌러서 계약취소"
+                  >
+                    <span className="group-hover:hidden">계약완료</span>
+                    <span className="hidden items-center gap-1 group-hover:flex">
+                      <XCircle size={14} />
+                      취소
+                    </span>
+                  </button>
                 )}
                 {vehicle.status === 'sold' &&
                   (canCancelSale ? (
@@ -336,21 +344,12 @@ export default function VehicleDetailPage() {
                   </button>
                 )}
                 {vehicle.status === 'contracted' && (
-                  <>
-                    <button
-                      onClick={handleCancelContract}
-                      className="flex items-center gap-1 rounded-lg border-2 border-ink-200 px-3 py-2 text-sm font-semibold text-ink-500 hover:bg-ink-50"
-                    >
-                      <XCircle size={15} />
-                      계약취소
-                    </button>
-                    <button
-                      onClick={() => setModal('sold')}
-                      className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                    >
-                      판매완료 처리
-                    </button>
-                  </>
+                  <button
+                    onClick={() => setModal('sold')}
+                    className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                  >
+                    판매완료 처리
+                  </button>
                 )}
               </div>
             </div>

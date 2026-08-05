@@ -143,7 +143,7 @@ export default function FileUploadSection({
     }
   }
 
-  // zip으로 한번에 묶어서 다운로드한다 (알림이 여러 번 뜨는 문제 방지, 모든 브라우저에서 동작)
+  // zip으로 한번에 묶어서 다운로드한다 (알림이 여러 번 뜨는 문제 방지)
   async function handleDownloadAll() {
     if (files.length === 0) return;
     setDownloadingAll(true);
