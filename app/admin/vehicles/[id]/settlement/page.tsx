@@ -8,12 +8,14 @@ import InlineEditableAmount from '@/components/InlineEditableAmount';
 import InlineEditableText from '@/components/InlineEditableText';
 import { EXPENSE_CATEGORIES, Employee, Expense, SettlementItem, Vehicle } from '@/lib/types';
 import {
+  addExpense,
   addSettlementItem,
   deleteSettlementItem,
   getVehicle,
   listEmployees,
   listExpenses,
   syncSettlementItems,
+  updateExpense,
   updateSettlementItem,
   updateVehicle,
 } from '@/lib/storage';
@@ -92,6 +94,14 @@ export default function VehicleSettlementPage() {
       ? expenses.filter((e) => e.category === label && e.vendor)
       : [];
 
+  // 특정 정산 항목명과 실제로 연결된(같은 이름의) 등록 비용 내역을 찾는다.
+  // - 등록화면 12개 항목명과 같으면: 그 카테고리로 등록된 내역
+  // - 그 외(정산 전용 항목명)면: 카테고리가 '기타'이고 기타 내용이 이 항목명과 같은 내역
+  const matchingExpensesFor = (label: string) =>
+    (EXPENSE_CATEGORIES as string[]).includes(label)
+      ? expenses.filter((e) => e.category === label)
+      : expenses.filter((e) => e.category === '기타' && e.category_note === label);
+
   const repairSummaryLines = expenses
     .filter((e) => e.category === '차량정비')
     .map((e, i) => `수리${i + 1} - ${e.vendor || '업체명 미입력'} (${formatWon(e.amount)})`);
@@ -105,6 +115,31 @@ export default function VehicleSettlementPage() {
   async function handleItemAmountSave(item: SettlementItem, value: number | null) {
     const updated = await updateSettlementItem(item.id, { amount: value ?? 0 });
     setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
+
+    // 수리/비용 내역에 아직 없는 항목이면 자동으로 등록해준다 (있으면 금액만 맞춰준다)
+    if (!vehicle || !session) return;
+    const matches = matchingExpensesFor(item.label);
+    if (matches.length === 0) {
+      if (value && value > 0) {
+        const isKnownCategory = (EXPENSE_CATEGORIES as string[]).includes(item.label);
+        const created = await addExpense({
+          vehicle_id: vehicle.id,
+          category: (isKnownCategory ? item.label : '기타') as any,
+          category_note: isKnownCategory ? undefined : item.label,
+          payment_method: '미결제',
+          amount: value,
+          vendor: '',
+          description: '정산 화면에서 자동 등록됨',
+          employee_id: session.id,
+        });
+        setExpenses((prev) => [created, ...prev]);
+      }
+    } else if (matches.length === 1 && value && value !== matches[0].amount) {
+      // 이 항목과 1:1로 연결된 내역이 이미 있으면 금액을 맞춰준다 (여러 건이면 어떤 걸 바꿔야 할지
+      // 알 수 없으니 건드리지 않는다)
+      const updatedExpense = await updateExpense(matches[0].id, { amount: value });
+      setExpenses((prev) => prev.map((e) => (e.id === updatedExpense.id ? updatedExpense : e)));
+    }
   }
 
   async function handleItemLabelSave(item: SettlementItem, label: string) {
