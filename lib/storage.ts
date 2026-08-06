@@ -514,11 +514,16 @@ export async function listSettlementItems(vehicleId: string): Promise<Settlement
 
 // 등록된 비용(특히 '기타'로 등록된 항목은 업체명/내용을 항목명으로 사용)에서
 // 라벨별 합계를 계산한다. 기존 표에 없는 라벨만 새로 추가하기 위한 비교 대상.
+// 예전에 쓰다가 없앤 항목명들 - 실제 비용내역에 이 이름으로 남아있는 게 있어도
+// 정산표에 자동으로 다시 생기지 않게 막는다 (사용자가 삭제해도 되살아나던 문제 방지)
+const RETIRED_LABELS = ['조선/비앤에스', '타타대우', '오복사', '휠교환', '블박/후방/실내'];
+
 function computeExpenseDrivenLabels(expenses: Expense[]): Map<string, number> {
   const map = new Map<string, number>();
   for (const e of expenses) {
     const label =
       e.category === '기타' ? (e.category_note?.trim() || e.vendor?.trim() || '기타') : e.category;
+    if (RETIRED_LABELS.includes(label)) continue;
     map.set(label, (map.get(label) ?? 0) + e.amount);
   }
   return map;
@@ -609,7 +614,7 @@ export async function addSettlementItem(
 
 export async function updateSettlementItem(
   id: string,
-  patch: Partial<Pick<SettlementItem, 'label' | 'amount'>>
+  patch: Partial<Pick<SettlementItem, 'label' | 'amount' | 'memo'>>
 ): Promise<SettlementItem> {
   const { data, error } = await supabase
     .from('vehicle_settlement_items')

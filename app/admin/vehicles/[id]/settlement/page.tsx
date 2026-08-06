@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Lock, ShieldCheck, PlusCircle, Trash2, Printer } from 'lucide-react';
+import { ArrowLeft, Lock, ShieldCheck, PlusCircle, Trash2, Printer, Pencil, StickyNote, X } from 'lucide-react';
 import AdminNav from '@/components/AdminNav';
 import InlineEditableAmount from '@/components/InlineEditableAmount';
 import InlineEditableText from '@/components/InlineEditableText';
@@ -43,6 +43,8 @@ export default function VehicleSettlementPage() {
   const [items, setItems] = useState<SettlementItem[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [memoModalItem, setMemoModalItem] = useState<SettlementItem | null>(null);
+  const [memoDraft, setMemoDraft] = useState('');
   const [notFound, setNotFound] = useState(false);
 
   const load = useCallback(async () => {
@@ -167,6 +169,18 @@ export default function VehicleSettlementPage() {
     setItems((prev) => prev.filter((i) => i.id !== id));
   }
 
+  function openMemoModal(item: SettlementItem) {
+    setMemoModalItem(item);
+    setMemoDraft(item.memo ?? '');
+  }
+
+  async function handleSaveMemo() {
+    if (!memoModalItem) return;
+    const updated = await updateSettlementItem(memoModalItem.id, { memo: memoDraft.trim() || null });
+    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    setMemoModalItem(null);
+  }
+
   return (
     <div className="min-h-screen bg-ink-50 print:bg-white">
       <div className="print:hidden">
@@ -284,8 +298,9 @@ export default function VehicleSettlementPage() {
                         className="flex-1 text-sm text-ink-600"
                       />
                       {matches.length > 0 ? (
-                        <span className="-m-1 inline-flex items-center rounded-lg px-3 py-2 text-sm font-semibold text-ink-800">
-                          {formatWon(amount)}
+                        <span className="-m-1 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-ink-800">
+                          <span>{formatWon(amount)}</span>
+                          <Pencil size={12} className="invisible" />
                         </span>
                       ) : (
                         <InlineEditableAmount
@@ -294,6 +309,17 @@ export default function VehicleSettlementPage() {
                           className="text-sm font-semibold text-ink-800"
                         />
                       )}
+                      <button
+                        onClick={() => openMemoModal(item)}
+                        title="메모"
+                        className={`rounded p-1 hover:bg-brand-50 ${
+                          item.memo
+                            ? 'text-brand-500'
+                            : 'text-ink-200 opacity-0 hover:text-brand-500 group-hover:opacity-100'
+                        }`}
+                      >
+                        <StickyNote size={13} />
+                      </button>
                       <button
                         onClick={() => handleDeleteItem(item.id)}
                         className="rounded p-1 text-ink-200 opacity-0 hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100"
@@ -308,6 +334,25 @@ export default function VehicleSettlementPage() {
                 <p className="mt-4 border-t border-ink-100 pt-3 text-xs leading-relaxed text-ink-400">
                   {detailSummary}
                 </p>
+              )}
+              {items.some((i) => i.memo) && (
+                <div className="mt-3 border-t border-ink-100 pt-3">
+                  <p className="mb-1.5 text-xs font-semibold text-ink-500">메모</p>
+                  <div className="space-y-1.5">
+                    {items
+                      .filter((i) => i.memo)
+                      .map((i) => (
+                        <div
+                          key={i.id}
+                          className="rounded-lg border border-ink-100 bg-ink-50/50 px-3 py-2 text-xs text-ink-600"
+                        >
+                          <span className="font-semibold text-ink-800">{i.label}</span>
+                          <span className="text-ink-300"> · </span>
+                          {i.memo}
+                        </div>
+                      ))}
+                  </div>
+                </div>
               )}
               <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-3">
                 <span className="text-sm font-bold text-ink-700">지출합계</span>
@@ -448,6 +493,27 @@ export default function VehicleSettlementPage() {
             </table>
           )}
 
+          {items.some((i) => i.memo) && (
+            <table className="w-full table-fixed border-collapse border border-t-0 border-black text-sm">
+              <colgroup>
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '82%' }} />
+              </colgroup>
+              <tbody>
+                {items
+                  .filter((i) => i.memo)
+                  .map((i) => (
+                    <tr key={i.id}>
+                      <td className="border border-black bg-gray-100 px-3 py-2 font-semibold">
+                        {i.label} 메모
+                      </td>
+                      <td className="border border-black px-3 py-2">{i.memo}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+
           <table className="w-full table-fixed border-collapse border border-t-0 border-black text-sm">
             <colgroup>
               <col style={{ width: '33.33%' }} />
@@ -495,6 +561,51 @@ export default function VehicleSettlementPage() {
               }
             }
           `}</style>
+        </div>
+      )}
+
+      {memoModalItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setMemoModalItem(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold text-ink-900">{memoModalItem.label} 메모</h3>
+              <button
+                onClick={() => setMemoModalItem(null)}
+                className="rounded-lg p-1 text-ink-300 hover:bg-ink-50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <textarea
+              autoFocus
+              value={memoDraft}
+              onChange={(e) => setMemoDraft(e.target.value)}
+              placeholder="수리내용 등 메모를 입력해주세요"
+              lang="ko"
+              rows={4}
+              className="w-full rounded-xl border-2 border-ink-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+            />
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                onClick={() => setMemoModalItem(null)}
+                className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-semibold text-ink-500 hover:bg-ink-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSaveMemo}
+                className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+              >
+                저장
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

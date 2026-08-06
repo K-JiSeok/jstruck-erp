@@ -116,6 +116,95 @@ function MonthlyExpenses({ expenses, onChanged }: { expenses: Expense[]; onChang
   );
 }
 
+function currentMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function vehicleMonthKey(v: Vehicle) {
+  return (v.sold_at ?? v.created_at).slice(0, 7);
+}
+
+function VehicleRow({ v }: { v: Vehicle }) {
+  return (
+    <Link
+      href={`/admin/vehicles/${v.id}`}
+      className="flex items-center justify-between rounded-xl border border-ink-200 bg-white px-4 py-3 hover:bg-ink-50/60"
+    >
+      <div>
+        <p className="font-semibold text-ink-900">{v.plate_number}</p>
+        <p className="text-xs text-ink-400">{v.vehicle_type ?? '차종 미입력'}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE[v.status]}`}>
+          {VEHICLE_STATUS_LABEL[v.status]}
+        </span>
+        {v.sale_price ? (
+          <span className="text-sm font-semibold text-ink-600">
+            {v.sale_price.toLocaleString('ko-KR')}원
+          </span>
+        ) : null}
+        <ChevronRight size={16} className="text-ink-300" />
+      </div>
+    </Link>
+  );
+}
+
+function VehiclesByMonth({ vehicles, emptyText }: { vehicles: Vehicle[]; emptyText: string }) {
+  const grouped = useMemo(() => {
+    const map = new Map<string, Vehicle[]>();
+    for (const v of vehicles) {
+      const ym = vehicleMonthKey(v);
+      const list = map.get(ym) ?? [];
+      list.push(v);
+      map.set(ym, list);
+    }
+    return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [vehicles]);
+
+  const [openMonth, setOpenMonth] = useState<string | null>(currentMonthKey());
+
+  if (vehicles.length === 0) {
+    return (
+      <p className="rounded-xl border border-dashed border-ink-200 bg-white py-6 text-center text-sm text-ink-400">
+        {emptyText}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {grouped.map(([ym, list]) => {
+        const open = openMonth === ym;
+        const total = list.reduce((sum, v) => sum + (v.sale_price ?? 0), 0);
+        return (
+          <div key={ym} className="overflow-hidden rounded-xl border border-ink-200 bg-white">
+            <button
+              onClick={() => setOpenMonth(open ? null : ym)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-ink-50/60"
+            >
+              <span className="font-semibold text-ink-900">{monthLabel(ym)}</span>
+              <span className="flex items-center gap-3 text-sm text-ink-500">
+                {list.length}대 · {total.toLocaleString('ko-KR')}원
+                <ChevronDown
+                  size={16}
+                  className={`text-ink-300 transition-transform ${open ? 'rotate-180' : ''}`}
+                />
+              </span>
+            </button>
+            {open && (
+              <div className="space-y-2 border-t border-ink-100 p-2">
+                {list.map((v) => (
+                  <VehicleRow key={v.id} v={v} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function VehicleMiniList({ vehicles, emptyText }: { vehicles: Vehicle[]; emptyText: string }) {
   if (vehicles.length === 0) {
     return (
@@ -127,27 +216,7 @@ function VehicleMiniList({ vehicles, emptyText }: { vehicles: Vehicle[]; emptyTe
   return (
     <div className="space-y-2">
       {vehicles.map((v) => (
-        <Link
-          key={v.id}
-          href={`/admin/vehicles/${v.id}`}
-          className="flex items-center justify-between rounded-xl border border-ink-200 bg-white px-4 py-3 hover:bg-ink-50/60"
-        >
-          <div>
-            <p className="font-semibold text-ink-900">{v.plate_number}</p>
-            <p className="text-xs text-ink-400">{v.vehicle_type ?? '차종 미입력'}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE[v.status]}`}>
-              {VEHICLE_STATUS_LABEL[v.status]}
-            </span>
-            {v.sale_price ? (
-              <span className="text-sm font-semibold text-ink-600">
-                {v.sale_price.toLocaleString('ko-KR')}원
-              </span>
-            ) : null}
-            <ChevronRight size={16} className="text-ink-300" />
-          </div>
-        </Link>
+        <VehicleRow key={v.id} v={v} />
       ))}
     </div>
   );
@@ -257,7 +326,7 @@ export default function EmployeeDetailPage() {
                 <Tag size={16} className="text-emerald-600" />
                 판매한 차량 ({sold.length}대)
               </h2>
-              <VehicleMiniList vehicles={sold} emptyText="판매 완료 처리한 차량이 없습니다." />
+              <VehiclesByMonth vehicles={sold} emptyText="판매 완료 처리한 차량이 없습니다." />
             </div>
 
             <div>
@@ -265,7 +334,19 @@ export default function EmployeeDetailPage() {
                 <ShoppingBag size={16} className="text-brand-600" />
                 매입한 차량 ({purchased.length}대)
               </h2>
-              <VehicleMiniList vehicles={purchased} emptyText="등록(매입)한 차량이 없습니다." />
+              <VehicleMiniList
+                vehicles={purchased.filter((v) => v.status !== 'sold')}
+                emptyText="판매중인 매입 차량이 없습니다."
+              />
+              {purchased.some((v) => v.status === 'sold') && (
+                <div className="mt-3">
+                  <p className="mb-2 text-xs font-semibold text-ink-400">판매완료 (월별)</p>
+                  <VehiclesByMonth
+                    vehicles={purchased.filter((v) => v.status === 'sold')}
+                    emptyText="판매완료된 매입 차량이 없습니다."
+                  />
+                </div>
+              )}
             </div>
 
             <div>

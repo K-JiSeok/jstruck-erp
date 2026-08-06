@@ -308,8 +308,8 @@ export default function MonthlySettlementPage() {
                   {commissionEmployees.map((emp) => (
                     <col key={emp.id} style={{ width: '80px' }} />
                   ))}
-                  <col style={{ width: '104px' }} />
-                  <col style={{ width: '104px' }} />
+                  <col style={{ width: '140px' }} />
+                  <col style={{ width: '140px' }} />
                 </colgroup>
                 <thead>
                   <tr className="border-b border-ink-100 bg-ink-50 text-xs font-semibold text-ink-400">
@@ -362,7 +362,7 @@ export default function MonthlySettlementPage() {
                             value={r.vehicle.sales_memo_1 ?? ''}
                             onSave={(v) => handleMemoNoteSave(r.vehicle.id, 'sales_memo_1', v)}
                             placeholder="이름"
-                            className="max-w-[36px] shrink-0 truncate text-xs"
+                            className="max-w-[80px] shrink-0 truncate text-xs"
                             compact
                           />
                           <InlineEditableAmount
@@ -383,7 +383,7 @@ export default function MonthlySettlementPage() {
                             value={r.vehicle.sales_memo_2 ?? ''}
                             onSave={(v) => handleMemoNoteSave(r.vehicle.id, 'sales_memo_2', v)}
                             placeholder="이름"
-                            className="max-w-[36px] shrink-0 truncate text-xs"
+                            className="max-w-[80px] shrink-0 truncate text-xs"
                             compact
                           />
                           <InlineEditableAmount
@@ -559,19 +559,21 @@ export default function MonthlySettlementPage() {
                       const man = commissionForMan(r.vehicle.id, emp.id);
                       const isSeller = r.vehicle.sold_by === emp.id;
                       return (
-                        <td key={emp.id} className="border border-black px-2 py-2.5 text-center">
-                          {isSeller ? '(판매) ' : ''}
+                        <td key={emp.id} className="border border-black px-2 py-2.5 text-center whitespace-nowrap">
+                          {isSeller ? '(판)' : ''}
                           {man ? `${man.toLocaleString('ko-KR')}만원` : ''}
                         </td>
                       );
                     })}
-                    <td className="border border-black px-2 py-2.5 text-center">
-                      {r.vehicle.sales_memo_1 ? `${r.vehicle.sales_memo_1} ` : ''}
-                      {extra1Man ? `${extra1Man.toLocaleString('ko-KR')}만원` : ''}
+                    <td className="border border-black px-2 py-2.5 text-center whitespace-nowrap">
+                      {r.vehicle.sales_memo_1
+                        ? `${r.vehicle.sales_memo_1} ${extra1Man ? `${extra1Man.toLocaleString('ko-KR')}만원` : ''}`
+                        : ''}
                     </td>
-                    <td className="border border-black px-2 py-2.5 text-center">
-                      {r.vehicle.sales_memo_2 ? `${r.vehicle.sales_memo_2} ` : ''}
-                      {extra2Man ? `${extra2Man.toLocaleString('ko-KR')}만원` : ''}
+                    <td className="border border-black px-2 py-2.5 text-center whitespace-nowrap">
+                      {r.vehicle.sales_memo_2
+                        ? `${r.vehicle.sales_memo_2} ${extra2Man ? `${extra2Man.toLocaleString('ko-KR')}만원` : ''}`
+                        : ''}
                     </td>
                   </tr>
                 );

@@ -180,6 +180,7 @@ export interface SettlementItem {
   vehicle_id: string;
   label: string;
   amount: number;
+  memo: string | null;
   sort_order: number;
   created_at: string;
 }
