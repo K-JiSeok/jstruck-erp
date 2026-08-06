@@ -129,7 +129,7 @@ export default function VehicleSettlementPage() {
           payment_method: '미결제',
           amount: value,
           vendor: '',
-          description: '정산 화면에서 자동 등록됨',
+          description: undefined,
           employee_id: session.id,
         });
         setExpenses((prev) => [created, ...prev]);

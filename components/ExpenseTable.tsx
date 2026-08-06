@@ -76,15 +76,15 @@ export default function ExpenseTable({
                 <td className="px-4 py-3">
                   <CategoryBadge category={e.category} label={expenseCategoryLabel(e)} />
                 </td>
-                <td className="px-4 py-3 text-ink-500">
+                <td className="whitespace-nowrap px-4 py-3 text-ink-500">
                   {e.payment_method}
                   {e.payment_method === '카드' && e.card_company ? `(${e.card_company})` : ''}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-ink-900">
                   {e.amount.toLocaleString('ko-KR')}원
                 </td>
-                <td className="px-4 py-3 text-ink-600">{e.vendor}</td>
-                <td className="px-4 py-3 text-ink-500">{e.employees?.name ?? '-'}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-ink-600">{e.vendor}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-ink-500">{e.employees?.name ?? '-'}</td>
                 <td className="max-w-[200px] truncate px-4 py-3 text-ink-400">
                   {e.description ?? '-'}
                 </td>
