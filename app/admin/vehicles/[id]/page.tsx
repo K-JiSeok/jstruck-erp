@@ -650,9 +650,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card">
-      <p className="text-xs font-semibold text-ink-400">{label}</p>
-      <p className="mt-1 text-lg font-bold text-ink-900">{value}</p>
+    <div className="overflow-hidden rounded-2xl border border-ink-200 bg-white p-4 shadow-card">
+      <p className="whitespace-nowrap text-xs font-semibold text-ink-400">{label}</p>
+      <p className="mt-1 overflow-x-auto whitespace-nowrap text-base font-bold text-ink-900 sm:text-lg">
+        {value}
+      </p>
     </div>
   );
 }

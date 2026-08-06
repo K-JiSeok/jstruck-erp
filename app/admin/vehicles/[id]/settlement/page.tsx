@@ -205,13 +205,16 @@ export default function VehicleSettlementPage() {
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink-200 bg-white p-5 shadow-card">
               <div>
-                <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold text-ink-900">
-                  {vehicle.plate_number} {vehicle.vehicle_type ?? ''}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl font-bold text-ink-900">{vehicle.plate_number}</h1>
                   <span className="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
                     <ShieldCheck size={12} />
                     비공개
                   </span>
-                </h1>
+                </div>
+                {vehicle.vehicle_type && (
+                  <p className="text-sm text-ink-500">{vehicle.vehicle_type}</p>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right text-sm text-ink-500">
@@ -607,12 +610,16 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border p-4 shadow-card ${
+      className={`overflow-hidden rounded-2xl border p-4 shadow-card ${
         tone === 'emerald' ? 'border-emerald-200 bg-emerald-50' : 'border-ink-200 bg-white'
       }`}
     >
-      <p className="text-xs font-semibold text-ink-400">{label}</p>
-      <div className={`mt-1 text-lg font-bold ${tone === 'emerald' ? 'text-emerald-700' : 'text-ink-900'}`}>
+      <p className="whitespace-nowrap text-xs font-semibold text-ink-400">{label}</p>
+      <div
+        className={`mt-1 overflow-x-auto whitespace-nowrap text-base font-bold sm:text-lg ${
+          tone === 'emerald' ? 'text-emerald-700' : 'text-ink-900'
+        }`}
+      >
         {children}
       </div>
     </div>

@@ -138,13 +138,13 @@ export default function EmployeesPage() {
           {error && <p className="w-full text-sm font-medium text-rose-600">{error}</p>}
         </form>
 
-        <div className="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-ink-200 bg-white shadow-card">
+          <table className="w-full min-w-[460px] text-left text-sm">
             <thead>
               <tr className="border-b border-ink-100 bg-ink-50 text-xs font-semibold text-ink-400">
-                <th className="px-4 py-3">이름</th>
-                <th className="px-4 py-3">연락처</th>
-                <th className="px-4 py-3">권한</th>
+                <th className="whitespace-nowrap px-4 py-3">이름</th>
+                <th className="whitespace-nowrap px-4 py-3">연락처</th>
+                <th className="whitespace-nowrap px-4 py-3">권한</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -165,7 +165,7 @@ export default function EmployeesPage() {
               )}
               {sortedEmployees.map((emp) => (
                 <tr key={emp.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
-                  <td className="px-4 py-3 font-semibold text-ink-900">
+                  <td className="whitespace-nowrap px-4 py-3 font-semibold text-ink-900">
                     <Link
                       href={`/admin/employees/${emp.id}`}
                       className="flex items-center gap-1 text-brand-700 hover:underline"
@@ -174,28 +174,28 @@ export default function EmployeesPage() {
                       <ChevronRight size={14} />
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-ink-500">{emp.phone ?? '-'}</td>
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-4 py-3 text-ink-500">{emp.phone ?? '-'}</td>
+                  <td className="whitespace-nowrap px-4 py-3">
                     {emp.role === 'admin' ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
                         <ShieldCheck size={12} />
                         관리자
                       </span>
                     ) : emp.role === 'ceo' ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
                         <Crown size={12} />
                         대표이사
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600">
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600">
                         직원
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
                     <button
                       onClick={() => handleDeactivate(emp.id)}
-                      className="text-xs font-semibold text-ink-400 hover:text-rose-500"
+                      className="whitespace-nowrap text-xs font-semibold text-ink-400 hover:text-rose-500"
                     >
                       비활성화
                     </button>
