@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Pencil } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 function formatNumber(v: string) {
   const digits = v.replace(/[^0-9]/g, '');
@@ -84,10 +84,9 @@ export default function InlineEditableAmount({
     <button
       type="button"
       onClick={startEdit}
-      className={`group inline-flex items-center gap-1.5 rounded-lg px-3 py-2 -m-1 hover:bg-brand-50 ${className}`}
+      className={`inline-flex items-center rounded-lg px-3 py-2 -m-1 hover:bg-brand-50 ${className}`}
     >
       <span>{value !== null && value !== undefined ? `${value.toLocaleString('ko-KR')}${suffix}` : placeholder}</span>
-      <Pencil size={12} className="text-ink-300 opacity-0 group-hover:opacity-100" />
     </button>
   );
 }
