@@ -15,7 +15,6 @@ import {
   listEmployees,
   listExpenses,
   syncSettlementItems,
-  updateExpense,
   updateSettlementItem,
   updateVehicle,
 } from '@/lib/storage';
@@ -85,15 +84,6 @@ export default function VehicleSettlementPage() {
     );
   }
 
-  const expenseTotal = items.reduce((sum, i) => sum + i.amount, 0);
-  const purchaseTotal = (vehicle?.purchase_price ?? 0) + expenseTotal;
-  const profitTotal = (vehicle?.sale_price ?? 0) - purchaseTotal;
-
-  const vendorsFor = (label: string) =>
-    (EXPENSE_CATEGORIES as string[]).includes(label)
-      ? expenses.filter((e) => e.category === label && e.vendor)
-      : [];
-
   // 특정 정산 항목명과 실제로 연결된(같은 이름의) 등록 비용 내역을 찾는다.
   // - 등록화면 12개 항목명과 같으면: 그 카테고리로 등록된 내역
   // - 그 외(정산 전용 항목명)면: 카테고리가 '기타'이고 기타 내용이 이 항목명과 같은 내역
@@ -101,6 +91,30 @@ export default function VehicleSettlementPage() {
     (EXPENSE_CATEGORIES as string[]).includes(label)
       ? expenses.filter((e) => e.category === label)
       : expenses.filter((e) => e.category === '기타' && e.category_note === label);
+
+  // 항목의 실제 표시 금액: 등록된 비용 내역이 있으면 그 합계, 없으면 직접 입력한 값
+  const effectiveAmount = (item: SettlementItem) => {
+    const matches = matchingExpensesFor(item.label);
+    if (matches.length > 0) return matches.reduce((sum, e) => sum + e.amount, 0);
+    return item.amount;
+  };
+
+  const expenseTotal = items.reduce((sum, i) => sum + effectiveAmount(i), 0);
+  const purchaseTotal = (vehicle?.purchase_price ?? 0) + expenseTotal;
+  const profitTotal = (vehicle?.sale_price ?? 0) - purchaseTotal;
+
+  // 지출합계 바로 위에 보여줄, 항목별 세부 내역 한 줄 요약
+  const detailSummary = items
+    .map((item) => {
+      const matches = matchingExpensesFor(item.label);
+      if (matches.length === 0) return null;
+      const parts = matches
+        .map((m) => `${m.vendor || '업체명없음'} ${m.amount.toLocaleString('ko-KR')}원`)
+        .join(' ');
+      return `${item.label} - ${parts}`;
+    })
+    .filter((line): line is string => !!line)
+    .join(' / ');
 
   const repairSummaryLines = expenses
     .filter((e) => e.category === '차량정비')
@@ -116,29 +130,22 @@ export default function VehicleSettlementPage() {
     const updated = await updateSettlementItem(item.id, { amount: value ?? 0 });
     setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
 
-    // 수리/비용 내역에 아직 없는 항목이면 자동으로 등록해준다 (있으면 금액만 맞춰준다)
+    // 수리/비용 내역에 아직 없는 항목이면 자동으로 등록해준다
     if (!vehicle || !session) return;
     const matches = matchingExpensesFor(item.label);
-    if (matches.length === 0) {
-      if (value && value > 0) {
-        const isKnownCategory = (EXPENSE_CATEGORIES as string[]).includes(item.label);
-        const created = await addExpense({
-          vehicle_id: vehicle.id,
-          category: (isKnownCategory ? item.label : '기타') as any,
-          category_note: isKnownCategory ? undefined : item.label,
-          payment_method: '미결제',
-          amount: value,
-          vendor: '',
-          description: undefined,
-          employee_id: session.id,
-        });
-        setExpenses((prev) => [created, ...prev]);
-      }
-    } else if (matches.length === 1 && value && value !== matches[0].amount) {
-      // 이 항목과 1:1로 연결된 내역이 이미 있으면 금액을 맞춰준다 (여러 건이면 어떤 걸 바꿔야 할지
-      // 알 수 없으니 건드리지 않는다)
-      const updatedExpense = await updateExpense(matches[0].id, { amount: value });
-      setExpenses((prev) => prev.map((e) => (e.id === updatedExpense.id ? updatedExpense : e)));
+    if (matches.length === 0 && value && value > 0) {
+      const isKnownCategory = (EXPENSE_CATEGORIES as string[]).includes(item.label);
+      const created = await addExpense({
+        vehicle_id: vehicle.id,
+        category: (isKnownCategory ? item.label : '기타') as any,
+        category_note: isKnownCategory ? undefined : item.label,
+        payment_method: '미결제',
+        amount: value,
+        vendor: '',
+        description: undefined,
+        employee_id: session.id,
+      });
+      setExpenses((prev) => [created, ...prev]);
     }
   }
 
@@ -257,51 +264,50 @@ export default function VehicleSettlementPage() {
               </div>
               <p className="mb-4 text-xs text-ink-400">
                 항목명과 금액을 클릭하면 그 자리에서 바로 입력·수정됩니다. 등록 화면에서 입력한
-                내역은 자동으로 채워지고 업체명이 밑에 작게 표시돼요. 상사비·세금·실내크리닝은
-                처음엔 자동 계산된 금액으로 채워지며, 다른 항목처럼 자유롭게 수정할 수 있어요.
+                내역이 있는 항목은 자동으로 합계 금액이 표시되고(직접 수정은 아래 세부내역에서),
+                아직 등록된 내역이 없는 항목은 직접 금액을 입력할 수 있어요. 상사비·세금·실내크리닝·
+                성능비는 처음엔 자동 계산된 금액으로 채워지며, 다른 항목처럼 자유롭게 수정할 수
+                있어요.
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {items.map((item) => {
-                  const vendors = vendorsFor(item.label);
+                  const matches = matchingExpensesFor(item.label);
+                  const amount = effectiveAmount(item);
                   return (
                     <div
                       key={item.id}
-                      className="group flex min-h-[56px] flex-col justify-start gap-1 rounded-lg border border-ink-100 px-2 py-1.5"
+                      className="group flex min-h-[44px] items-center justify-between gap-2 rounded-lg border border-ink-100 px-2 py-1.5"
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <InlineEditableText
-                          value={item.label}
-                          onSave={(v) => handleItemLabelSave(item, v)}
-                          className="flex-1 text-sm text-ink-600"
-                        />
+                      <InlineEditableText
+                        value={item.label}
+                        onSave={(v) => handleItemLabelSave(item, v)}
+                        className="flex-1 text-sm text-ink-600"
+                      />
+                      {matches.length > 0 ? (
+                        <span className="text-sm font-semibold text-ink-800">{formatWon(amount)}</span>
+                      ) : (
                         <InlineEditableAmount
                           value={item.amount || null}
                           onSave={(v) => handleItemAmountSave(item, v)}
                           className="text-sm font-semibold text-ink-800"
                         />
-                        <button
-                          onClick={() => handleDeleteItem(item.id)}
-                          className="rounded p-1 text-ink-200 opacity-0 hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                      {vendors.length > 0 && (
-                        <div className="pl-1 text-[11px] leading-tight text-ink-400">
-                          {vendors.map((v) => (
-                            <p key={v.id} className="truncate">
-                              {v.vendor}
-                              {v.description ? ` · ${v.description}` : ''} ·{' '}
-                              {v.amount.toLocaleString('ko-KR')}원
-                            </p>
-                          ))}
-                        </div>
                       )}
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="rounded p-1 text-ink-200 opacity-0 hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   );
                 })}
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-3">
+              {detailSummary && (
+                <p className="mt-4 border-t border-ink-100 pt-3 text-xs leading-relaxed text-ink-400">
+                  {detailSummary}
+                </p>
+              )}
+              <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-3">
                 <span className="text-sm font-bold text-ink-700">지출합계</span>
                 <span className="text-base font-bold text-ink-900">{formatWon(expenseTotal)}</span>
               </div>
@@ -405,7 +411,7 @@ export default function VehicleSettlementPage() {
                         {item.label}
                       </td>
                       <td className="border border-black px-2.5 py-2 text-right">
-                        {item.amount ? formatWon(item.amount) : '-'}
+                        {effectiveAmount(item) ? formatWon(effectiveAmount(item)) : '-'}
                       </td>
                     </React.Fragment>
                   ))}

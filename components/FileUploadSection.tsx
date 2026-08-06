@@ -232,7 +232,9 @@ export default function FileUploadSection({
         <div
           className={
             fillHeight
-              ? 'grid flex-1 auto-rows-fr grid-cols-2 gap-2'
+              ? `grid flex-1 auto-rows-fr gap-2 ${
+                  files.length > 1 ? 'grid-cols-2' : 'mx-auto w-full max-w-[260px] grid-cols-1'
+                }`
               : 'grid grid-cols-4 gap-2 sm:grid-cols-5'
           }
         >

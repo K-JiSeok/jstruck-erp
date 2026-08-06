@@ -445,13 +445,11 @@ export async function listNotifications(limit = 20) {
 export const DEFAULT_SETTLEMENT_LABELS = [
   '낙찰수수료',
   '매입대행비',
-  '성능비',
   '시트작업비',
   '부가세차액',
   '타타대우',
   '특장',
   '조선/비앤에스',
-  '블박/후방/실내',
   '구조변경',
   '운송료',
   '장착/탈착비',
@@ -462,12 +460,13 @@ export const DEFAULT_SETTLEMENT_LABELS = [
 ];
 
 // 자동으로 초기값이 계산되는 항목 (이후에는 다른 항목처럼 자유롭게 수정 가능)
-const FIXED_DEFAULT_LABELS = ['상사비', '세금', '실내크리닝'];
+const FIXED_DEFAULT_LABELS = ['상사비', '세금', '실내크리닝', '성능비'];
 
 function computeFixedDefault(label: string, vehicle: Vehicle): number {
   if (label === '상사비') return computeAgencyFee(vehicle.sale_price);
   if (label === '세금') return computeTaxAmount(vehicle.purchase_amount, vehicle.tax_invoice_amount);
   if (label === '실내크리닝') return FIXED_INTERIOR_CLEANING_AMOUNT;
+  if (label === '성능비') return 30_000;
   return 0;
 }
 
