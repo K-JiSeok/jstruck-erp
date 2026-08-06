@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Lock, ShieldCheck, PlusCircle, Trash2, Printer, Pencil, StickyNote, X } from 'lucide-react';
+import { ArrowLeft, Lock, ShieldCheck, PlusCircle, Trash2, Printer, StickyNote, X } from 'lucide-react';
 import AdminNav from '@/components/AdminNav';
 import InlineEditableAmount from '@/components/InlineEditableAmount';
 import InlineEditableText from '@/components/InlineEditableText';
@@ -94,14 +94,7 @@ export default function VehicleSettlementPage() {
       ? expenses.filter((e) => e.category === label)
       : expenses.filter((e) => e.category === '기타' && e.category_note === label);
 
-  // 항목의 실제 표시 금액: 등록된 비용 내역이 있으면 그 합계, 없으면 직접 입력한 값
-  const effectiveAmount = (item: SettlementItem) => {
-    const matches = matchingExpensesFor(item.label);
-    if (matches.length > 0) return matches.reduce((sum, e) => sum + e.amount, 0);
-    return item.amount;
-  };
-
-  const expenseTotal = items.reduce((sum, i) => sum + effectiveAmount(i), 0);
+  const expenseTotal = items.reduce((sum, i) => sum + i.amount, 0);
   const purchaseTotal = (vehicle?.purchase_price ?? 0) + expenseTotal;
   const profitTotal = (vehicle?.sale_price ?? 0) - purchaseTotal;
 
@@ -285,8 +278,6 @@ export default function VehicleSettlementPage() {
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {items.map((item) => {
-                  const matches = matchingExpensesFor(item.label);
-                  const amount = effectiveAmount(item);
                   return (
                     <div
                       key={item.id}
@@ -297,18 +288,11 @@ export default function VehicleSettlementPage() {
                         onSave={(v) => handleItemLabelSave(item, v)}
                         className="flex-1 text-sm text-ink-600"
                       />
-                      {matches.length > 0 ? (
-                        <span className="-m-1 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-ink-800">
-                          <span>{formatWon(amount)}</span>
-                          <Pencil size={12} className="invisible" />
-                        </span>
-                      ) : (
-                        <InlineEditableAmount
-                          value={item.amount || null}
-                          onSave={(v) => handleItemAmountSave(item, v)}
-                          className="text-sm font-semibold text-ink-800"
-                        />
-                      )}
+                      <InlineEditableAmount
+                        value={item.amount || null}
+                        onSave={(v) => handleItemAmountSave(item, v)}
+                        className="text-sm font-semibold text-ink-800"
+                      />
                       <button
                         onClick={() => openMemoModal(item)}
                         title="메모"
@@ -458,7 +442,7 @@ export default function VehicleSettlementPage() {
                         {item.label}
                       </td>
                       <td className="border border-black px-2.5 py-2 text-right">
-                        {effectiveAmount(item) ? formatWon(effectiveAmount(item)) : '-'}
+                        {item.amount ? formatWon(item.amount) : '-'}
                       </td>
                     </React.Fragment>
                   ))}
