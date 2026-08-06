@@ -107,7 +107,7 @@ export default function VehicleSettlementPage() {
   const detailSummary = items
     .map((item) => {
       const matches = matchingExpensesFor(item.label);
-      if (matches.length === 0) return null;
+      if (matches.length < 2) return null;
       const parts = matches
         .map((m) => `${m.vendor || '업체명없음'} ${m.amount.toLocaleString('ko-KR')}원`)
         .join(' ');
@@ -284,7 +284,9 @@ export default function VehicleSettlementPage() {
                         className="flex-1 text-sm text-ink-600"
                       />
                       {matches.length > 0 ? (
-                        <span className="text-sm font-semibold text-ink-800">{formatWon(amount)}</span>
+                        <span className="-m-1 inline-flex items-center rounded-lg px-3 py-2 text-sm font-semibold text-ink-800">
+                          {formatWon(amount)}
+                        </span>
                       ) : (
                         <InlineEditableAmount
                           value={item.amount || null}

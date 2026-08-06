@@ -6,7 +6,6 @@ import {
   Expense,
   ExpenseCategory,
   ExpenseFilters,
-  EXPENSE_CATEGORIES,
   PaymentMethod,
   SalesCommission,
   SettlementItem,
@@ -441,15 +440,15 @@ export async function listNotifications(limit = 20) {
 // ================= Settlement Items (정산 시트 - 통합 지출 항목) =================
 
 // 정산페이지 전용 항목 (등록 화면 12개 항목과는 겹치지 않는, 사무실에서 직접 입력하는 항목)
-// 상사비/세금/실내크리닝은 자동계산되는 고정 항목이라 이 목록에서 제외한다 (settlement 페이지에서 별도 처리).
+// 상사비/세금/실내크리닝/성능비는 자동계산되는 고정 항목이라 이 목록에서 제외한다 (settlement 페이지에서 별도 처리).
 export const DEFAULT_SETTLEMENT_LABELS = [
   '낙찰수수료',
   '매입대행비',
   '시트작업비',
   '부가세차액',
-  '타타대우',
   '특장',
-  '조선/비앤에스',
+  '조선모터스',
+  '비앤에스',
   '구조변경',
   '운송료',
   '장착/탈착비',
@@ -470,12 +469,37 @@ function computeFixedDefault(label: string, vehicle: Vehicle): number {
   return 0;
 }
 
-// 등록 화면 12개 항목(기타 제외) + 정산 전용 항목 = 표에 항상 보여줄 기본 틀
-// 자동계산 항목(상사비/세금/실내크리닝)을 제일 앞에 배치한다.
+// 표에 항상 보여줄 기본 틀 - 지정된 순서대로 명시적으로 배치한다.
 const SETTLEMENT_TEMPLATE_LABELS = [
-  ...FIXED_DEFAULT_LABELS,
-  ...EXPENSE_CATEGORIES.filter((c) => c !== '기타'),
-  ...DEFAULT_SETTLEMENT_LABELS,
+  '상사비',
+  '세금',
+  '실내크리닝',
+  '세차',
+  '성능비',
+  '이전비',
+  '차량정비',
+  '타이어',
+  '도색',
+  '조선모터스',
+  '비앤에스',
+  '광천상사',
+  '주유',
+  '부품',
+  '실내정비',
+  '탁송료',
+  '검사료',
+  '배터리',
+  '낙찰수수료',
+  '매입대행비',
+  '시트작업비',
+  '부가세차액',
+  '특장',
+  '구조변경',
+  '운송료',
+  '장착/탈착비',
+  '소개비',
+  '설정해지료',
+  '보험료',
 ];
 
 export async function listSettlementItems(vehicleId: string): Promise<SettlementItem[]> {
