@@ -229,13 +229,13 @@ export default function MonthlySettlementPage() {
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-ink-100 bg-ink-50 text-xs font-semibold text-ink-400">
-                    <th className="px-3 py-3">번호</th>
-                    <th className="px-3 py-3">판매일</th>
-                    <th className="px-3 py-3">판매차량</th>
-                    <th className="px-3 py-3 text-right">매입가</th>
-                    <th className="px-3 py-3 text-right">판매가</th>
-                    <th className="px-3 py-3 text-right">지출금</th>
-                    <th className="px-3 py-3 text-right">수익금</th>
+                    <th className="whitespace-nowrap px-3 py-3">번호</th>
+                    <th className="whitespace-nowrap px-3 py-3">판매일</th>
+                    <th className="whitespace-nowrap px-3 py-3">판매차량</th>
+                    <th className="whitespace-nowrap px-3 py-3 text-right">매입가</th>
+                    <th className="whitespace-nowrap px-3 py-3 text-right">판매가</th>
+                    <th className="whitespace-nowrap px-3 py-3 text-right">지출금</th>
+                    <th className="whitespace-nowrap px-3 py-3 text-right">수익금</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -245,7 +245,7 @@ export default function MonthlySettlementPage() {
                       <td className="whitespace-nowrap px-3 py-2.5 text-ink-500">
                         {sortKeyOf(r.vehicle).slice(0, 10)}
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td className="whitespace-nowrap px-3 py-2.5">
                         <Link
                           href={`/admin/vehicles/${r.vehicle.id}/settlement`}
                           className="font-semibold text-brand-700 hover:underline"
@@ -254,11 +254,17 @@ export default function MonthlySettlementPage() {
                         </Link>
                         <p className="text-xs text-ink-400">{r.vehicle.plate_number}</p>
                       </td>
-                      <td className="px-3 py-2.5 text-right text-ink-700">{formatWon(r.purchase)}</td>
-                      <td className="px-3 py-2.5 text-right text-ink-700">{formatWon(r.sale)}</td>
-                      <td className="px-3 py-2.5 text-right text-ink-700">{formatWon(r.expense)}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right text-ink-700">
+                        {formatWon(r.purchase)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right text-ink-700">
+                        {formatWon(r.sale)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right text-ink-700">
+                        {formatWon(r.expense)}
+                      </td>
                       <td
-                        className={`px-3 py-2.5 text-right font-bold ${
+                        className={`whitespace-nowrap px-3 py-2.5 text-right font-bold ${
                           r.profit >= 0 ? 'text-emerald-700' : 'text-rose-600'
                         }`}
                       >
@@ -269,13 +275,15 @@ export default function MonthlySettlementPage() {
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-ink-200 bg-ink-50 font-bold">
-                    <td className="px-3 py-3" colSpan={3}>
+                    <td className="whitespace-nowrap px-3 py-3" colSpan={3}>
                       합계
                     </td>
-                    <td className="px-3 py-3 text-right">{formatWon(totalPurchase)}</td>
-                    <td className="px-3 py-3 text-right">{formatWon(totalSale)}</td>
-                    <td className="px-3 py-3 text-right">{formatWon(totalExpense)}</td>
-                    <td className="px-3 py-3 text-right text-emerald-700">{formatWon(totalProfit)}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-right">{formatWon(totalPurchase)}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-right">{formatWon(totalSale)}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-right">{formatWon(totalExpense)}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-right text-emerald-700">
+                      {formatWon(totalProfit)}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -477,7 +485,7 @@ export default function MonthlySettlementPage() {
                   <td className="border border-black px-2 py-1.5 text-center">
                     {sortKeyOf(r.vehicle).slice(0, 10)}
                   </td>
-                  <td className="border border-black px-2 py-1.5">
+                  <td className="border border-black px-2 py-1.5 whitespace-nowrap overflow-hidden text-ellipsis">
                     {r.vehicle.vehicle_type ?? r.vehicle.plate_number}
                   </td>
                   <td className="border border-black px-2 py-1.5 text-right">{formatWon(r.purchase)}</td>
@@ -552,7 +560,7 @@ export default function MonthlySettlementPage() {
                 return (
                   <tr key={r.vehicle.id}>
                     <td className="border border-black px-2 py-2.5 text-center">{r.no}</td>
-                    <td className="border border-black px-2 py-2.5">
+                    <td className="border border-black px-2 py-2.5 whitespace-nowrap overflow-hidden text-ellipsis">
                       {r.vehicle.vehicle_type ?? r.vehicle.plate_number}
                     </td>
                     {commissionEmployees.map((emp) => {

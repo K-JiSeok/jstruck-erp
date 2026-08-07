@@ -217,7 +217,7 @@ export default function VehicleSettlementPage() {
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <div className="text-right text-sm text-ink-500">
+                <div className="text-left text-sm text-ink-500">
                   <p>매입자: {employeeName(employees, vehicle.purchased_by)}</p>
                   <p>판매자: {employeeName(employees, vehicle.sold_by)}</p>
                 </div>
