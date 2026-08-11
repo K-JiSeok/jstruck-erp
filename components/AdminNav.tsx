@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Truck, Smartphone, Home, Users, Calculator } from 'lucide-react';
+import { COMPANY_NAME, PRODUCT_NAME } from '@/lib/branding';
 
 const NAV_ITEMS = [
-  { href: '/admin', label: '정산 대시보드', icon: LayoutDashboard },
-  { href: '/admin/vehicles', label: '차량 관리', icon: Truck },
-  { href: '/admin/employees', label: '직원 관리', icon: Users },
-  { href: '/admin/settlement', label: '월정산', icon: Calculator },
+  { href: '/admin', label: '홈', icon: LayoutDashboard },
+  { href: '/admin/vehicles', label: '차량', icon: Truck },
+  { href: '/admin/employees', label: '팀원', icon: Users },
+  { href: '/admin/settlement', label: '월간리포트', icon: Calculator },
 ];
 
 export default function AdminNav() {
@@ -20,13 +21,13 @@ export default function AdminNav() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 text-brand-800">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-700 text-sm font-bold text-white">
-              JS
+              TN
             </div>
             <div className="hidden sm:block">
               <p className="text-sm font-bold leading-tight text-ink-900">
-                제이에스매매상사
+                {COMPANY_NAME}
               </p>
-              <p className="text-xs leading-tight text-ink-400">비용 정산 관리</p>
+              <p className="text-xs leading-tight text-ink-400">{PRODUCT_NAME}</p>
             </div>
           </Link>
 

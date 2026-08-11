@@ -6,6 +6,7 @@ import { Delete, LogIn, ArrowLeft } from 'lucide-react';
 import { Employee } from '@/lib/types';
 import { listEmployees, verifyLogin } from '@/lib/storage';
 import { getSession, saveSession } from '@/lib/session';
+import { COMPANY_NAME, PRODUCT_NAME } from '@/lib/branding';
 
 export default function LoginPage() {
   return (
@@ -99,8 +100,11 @@ function LoginPageInner() {
       <div className="flex min-h-screen flex-col items-center bg-ink-50 px-6 py-12">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-700 text-lg font-bold text-white">
-            JS
+            TN
           </div>
+          <p className="mb-1 text-sm font-semibold text-brand-700">
+            {COMPANY_NAME} <span className="text-ink-400">{PRODUCT_NAME}</span>
+          </p>
           <h1 className="text-xl font-bold text-ink-900">직원 로그인</h1>
           <p className="mt-1 text-sm text-ink-400">본인 이름을 선택해주세요</p>
         </div>

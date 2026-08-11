@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Smartphone, LayoutDashboard, Truck, LogIn, LogOut, UserCircle2 } from 'lucide-react';
 import { clearSession, getSession, Session } from '@/lib/session';
+import { BRAND_FULL } from '@/lib/branding';
 
 export default function HomePage() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -19,7 +20,7 @@ export default function HomePage() {
           <Truck size={32} />
         </div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          제이에스매매상사 비용 정산 시스템
+          {BRAND_FULL}
         </h1>
         <p className="mt-2 max-w-md text-sm text-brand-100/80 sm:text-base">
           현장 결제 내역을 빠짐없이 등록하고, 차량별로 한눈에 모아 월말 정산하세요.

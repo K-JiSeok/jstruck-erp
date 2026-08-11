@@ -259,7 +259,7 @@ export default function VehicleDetailPage() {
                 className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100"
               >
                 <Calculator size={15} />
-                정산 보기
+                정산
               </Link>
             )}
         </div>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ClipboardList } from 'lucide-react';
 import ExpenseForm from '@/components/ExpenseForm';
 import { getSession, Session } from '@/lib/session';
+import { COMPANY_NAME, PRODUCT_NAME } from '@/lib/branding';
 
 export default function WorkerPage() {
   const router = useRouter();
@@ -34,11 +35,13 @@ export default function WorkerPage() {
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-ink-200 bg-brand-700 px-4 py-4 text-white shadow-md">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 font-bold">
-            JS
+            TN
           </div>
           <div>
             <p className="text-base font-bold leading-tight">비용/영수증 등록</p>
-            <p className="text-xs leading-tight text-white/70">제이에스매매상사</p>
+            <p className="text-xs leading-tight text-white/70">
+              {COMPANY_NAME} · {PRODUCT_NAME}
+            </p>
           </div>
         </div>
         <Link
