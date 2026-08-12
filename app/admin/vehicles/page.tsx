@@ -83,7 +83,7 @@ export default function VehiclesPage() {
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
         <div>
-          <h1 className="text-xl font-bold text-ink-900">차량 관리</h1>
+          <h1 className="text-xl font-bold text-ink-900">차량</h1>
           <p className="text-sm text-ink-400">
             차량번호, 차종, 입고일을 간단히 등록하면 직원 등록 화면 드롭다운에 바로 반영됩니다.
             차량번호를 클릭하면 상세 정보 페이지로 이동합니다.

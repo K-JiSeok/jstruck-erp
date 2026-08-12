@@ -179,7 +179,7 @@ export default function MonthlySettlementPage() {
 
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 print:hidden">
         <div>
-          <h1 className="text-xl font-bold text-ink-900">월정산</h1>
+          <h1 className="text-xl font-bold text-ink-900">월간리포트</h1>
           <p className="text-sm text-ink-400">
             판매완료된 차량을 판매일 기준으로 월별로 모아 확인합니다. (관리자·대표이사 전용)
           </p>

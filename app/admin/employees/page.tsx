@@ -78,7 +78,7 @@ export default function EmployeesPage() {
 
       <main className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6">
         <div>
-          <h1 className="text-xl font-bold text-ink-900">직원 관리</h1>
+          <h1 className="text-xl font-bold text-ink-900">팀원</h1>
           <p className="text-sm text-ink-400">
             직원 로그인용 이름과 PIN 번호(4자리)를 등록합니다.
           </p>

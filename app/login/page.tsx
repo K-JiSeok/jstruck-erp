@@ -130,7 +130,7 @@ function LoginPageInner() {
         {employees.length === 0 && !error && (
           <p className="mt-6 max-w-sm text-center text-sm text-ink-400">
             등록된 직원이 없습니다. 관리자에게 직원 등록을 요청해주세요.
-            (관리자 화면 → 직원 관리)
+            (관리자 로그인 → 팀원)
           </p>
         )}
       </div>

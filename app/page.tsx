@@ -65,7 +65,7 @@ export default function HomePage() {
           <div className="rounded-xl bg-brand-500/30 p-3">
             <Smartphone size={26} />
           </div>
-          <h2 className="text-lg font-bold">직원 화면</h2>
+          <h2 className="text-lg font-bold">현장등록</h2>
           <p className="text-sm text-brand-100/70">
             차량 정비/주유 등 결제 내역과 영수증 사진을 바로 등록합니다.
           </p>
@@ -81,12 +81,12 @@ export default function HomePage() {
           <div className="rounded-xl bg-brand-500/30 p-3">
             <LayoutDashboard size={26} />
           </div>
-          <h2 className="text-lg font-bold">관리자 화면</h2>
+          <h2 className="text-lg font-bold">홈</h2>
           <p className="text-sm text-brand-100/70">
             전체 내역 조회, 차량/기간별 필터링, 엑셀 정산 다운로드를 진행합니다.
           </p>
           <span className="mt-2 text-sm font-semibold text-brand-200 group-hover:underline">
-            정산 관리하러 가기 →
+            홈으로 이동 →
           </span>
         </Link>
       </div>

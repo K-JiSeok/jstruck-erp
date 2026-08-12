@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-ink-900">정산 대시보드</h1>
+            <h1 className="text-xl font-bold text-ink-900">홈</h1>
             <p className="text-sm text-ink-400">이번 달 현장 결제 내역을 확인하고 엑셀로 정산하세요.</p>
           </div>
           <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600">

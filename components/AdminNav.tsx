@@ -59,7 +59,7 @@ export default function AdminNav() {
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50 hover:text-ink-800"
           >
             <Smartphone size={16} />
-            <span className="hidden sm:inline">현장 등록화면</span>
+            <span className="hidden sm:inline">현장등록</span>
           </Link>
           <Link
             href="/"
